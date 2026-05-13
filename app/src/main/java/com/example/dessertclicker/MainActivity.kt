@@ -53,11 +53,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -71,6 +68,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
 import com.example.dessertclicker.data.Datasource
 import com.example.dessertclicker.model.Dessert
+import com.example.dessertclicker.ui.DessertViewModel
 import com.example.dessertclicker.ui.theme.DessertClickerTheme
 
 private const val TAG = "MainActivity"
@@ -149,6 +147,7 @@ fun determineDessertToShow(
 /**
  * Share desserts sold information using ACTION_SEND intent
  */
+/*
 private fun shareSoldDessertsInformation(intentContext: Context, dessertsSold: Int, revenue: Int) {
     val sendIntent = Intent().apply {
         action = Intent.ACTION_SEND
@@ -171,13 +170,16 @@ private fun shareSoldDessertsInformation(intentContext: Context, dessertsSold: I
         ).show()
     }
 }
+*/
 
 @Composable
 private fun DessertClickerApp(
-    desserts: List<Dessert>
+    desserts: List<Dessert>,
+    viewModel: DessertViewModel = DessertViewModel()
 ) {
+    val dessertUiState by viewModel.uiState.collectAsState()
 
-    var revenue by rememberSaveable() { mutableStateOf(0) }
+   /* var revenue by rememberSaveable() { mutableStateOf(0) }
     var dessertsSold by rememberSaveable() { mutableStateOf(0) }
 
     val currentDessertIndex by rememberSaveable() { mutableStateOf(0) }
@@ -187,7 +189,8 @@ private fun DessertClickerApp(
     }
     var currentDessertImageId by rememberSaveable() {
         mutableStateOf(desserts[currentDessertIndex].imageId)
-    }
+    }*/
+
 
     Scaffold(
         topBar = {
@@ -195,10 +198,10 @@ private fun DessertClickerApp(
             val layoutDirection = LocalLayoutDirection.current
             DessertClickerAppBar(
                 onShareButtonClicked = {
-                    shareSoldDessertsInformation(
+                    viewModel.shareSoldDessertsInformation(
                         intentContext = intentContext,
-                        dessertsSold = dessertsSold,
-                        revenue = revenue
+                        dessertsSold = dessertUiState.dessertsSoldCount,
+                        revenue = dessertUiState.totalRevenue
                     )
                 },
                 modifier = Modifier
@@ -214,19 +217,21 @@ private fun DessertClickerApp(
         }
     ) { contentPadding ->
         DessertClickerScreen(
-            revenue = revenue,
-            dessertsSold = dessertsSold,
-            dessertImageId = currentDessertImageId,
+            revenue = dessertUiState.totalRevenue,
+            dessertsSold = dessertUiState.dessertsSoldCount,
+            dessertImageId = dessertUiState.currentDessertImageId,
             onDessertClicked = {
 
+                viewModel.incrementRevenue()
                 // Update the revenue
-                revenue += currentDessertPrice
-                dessertsSold++
+                /*revenue += currentDessertPrice
+                dessertsSold++*/
 
                 // Show the next dessert
-                val dessertToShow = determineDessertToShow(desserts, dessertsSold)
-                currentDessertImageId = dessertToShow.imageId
-                currentDessertPrice = dessertToShow.price
+//                val dessertToShow = viewModel.determineDessertToShow(desserts, dessertsSold)
+                val dessertToShow = viewModel.determineDessertToShow()
+                /*currentDessertImageId = dessertToShow.imageId
+                currentDessertPrice = dessertToShow.price*/
             },
             modifier = Modifier.padding(contentPadding)
         )
